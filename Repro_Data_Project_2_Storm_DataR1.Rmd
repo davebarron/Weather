@@ -1,0 +1,113 @@
+---
+title: "Storm_Data_Analysis"
+author: "David Barron"
+date: "July 4, 2017"
+output: 
+  html_document: 
+    fig_caption: yes
+    keep_md: yes
+---
+#Synopsis
+Data from U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database indicate:
+
+  * Excessive Heat and Tornados represents the most harmful events with respect to population health.  Excessive Heat represents approximately 23% if all fatalities and 13% of all weather related injuries.  Tornados represents approximately 17% if all fatalities and 36% of all weather related injuries.
+  
+  * Floods represent approximately 37% of all property damage associated with weather.
+  
+  * Droughts represents approximately 39% of all crop damage associated with weather.
+  
+#Data Processing
+Data file found on https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2
+
+Data file has been downloaded to working directory and unzipped into csv file.  File was read using fread function since file size is large.
+
+Note: NOAA fixed the number of categories at 48 in 1996, so data was limited to post 1996.  In addition, the category data contained many errors and event type (EVTYPE) was corrected (EVTYPE) for analysis.
+```{r}
+library(data.table)
+
+setwd("E:/Coursera/Data/Repro_Data/Week4_Project")
+StormData<-fread("repdata_data_StormData.csv",header=TRUE, sep=",")
+
+StormData$BGN_DATE<-as.Date( StormData$BGN_DATE, "%m/%d/%Y")
+StormData<-subset(StormData, StormData$BGN_DATE>=as.Date("1996-01-01"))
+
+library(stringdist)
+
+StormData$EVTYPE<-toupper(StormData$EVTYPE)
+
+StormData$EVTYPE2<-ifelse(StormData$EVTYPE=="WINTRY MIX", "WINTER WEATHER", ifelse(StormData$EVTYPE=="WINTER WEATHER/MIX", "WINTER WEATHER",ifelse(StormData$EVTYPE=="WINTER WEATHER MIX","WINTER WEATHER",ifelse(StormData$EVTYPE=="WINTER STORMS", "WINTER STORM",ifelse(StormData$EVTYPE=="WINTER STORM HIGH WINDS", "WINTER STORM", ifelse(StormData$EVTYPE=="WIND", "HIGH WINDS",ifelse(StormData$EVTYPE=="WIND STORM", "HIGH WINDS",ifelse(StormData$EVTYPE=="WIND DAMAGE", "HIGH WINDS",ifelse(StormData$EVTYPE=="WIND AND WAVE", "HIGH SURF",ifelse(StormData$EVTYPE=="WILDFIRES", "WILDFIRE",ifelse(StormData$EVTYPE=="WILD FIRES", "WILDFIRE",ifelse(StormData$EVTYPE=="WILD/FOREST FIRE", "WILDFIRE",ifelse(StormData$EVTYPE=="WILD/FOREST FIRES", "WILDFIRE",ifelse(StormData$EVTYPE=="WHIRLWIND", "THUNDERSTORM WIND",ifelse(StormData$EVTYPE=="WINDS", "HIGH WIND",ifelse(StormData$EVTYPE=="WET MICROBURST", "THUNDERSTORM WIND",ifelse(StormData$EVTYPE=="WATERSPOUT/TORNADO", "TORNADO",ifelse(StormData$EVTYPE=="WATERSPOUT/ TORNADO", "TORNADO",ifelse(StormData$EVTYPE=="WATERSPOUT TORNADO", "TORNADO",ifelse(StormData$EVTYPE=="WATERSPOUT-TORNADO", "TORNADO",ifelse(StormData$EVTYPE=="WATERSPOUT-", "TORNADO",ifelse(StormData$EVTYPE=="WATERSPOUT", "TORNADO",ifelse(StormData$EVTYPE=="URBAN/SML STREAM FLD", "HEAVY RAIN",ifelse(StormData$EVTYPE=="URBAN/SMALL STREAM FLOOD", "HEAVY RAIN",ifelse(StormData$EVTYPE=="TYPHOON", "HURRICANE (TYPHOON)",ifelse(StormData$EVTYPE=="TORNDAO", "TORNADO",ifelse(StormData$EVTYPE=="TIDAL FLOODING", "STORM SURGE/TIDE",ifelse(StormData$EVTYPE=="MARINE ACCIDENT", "MARINE THUNDERSTORM WIND",ifelse(StormData$EVTYPE=="STRONG WINDS", "STRONG WIND",ifelse(StormData$EVTYPE=="HEAVY SNOW AND STRONG WINDS", "WINTER STORM",ifelse(StormData$EVTYPE=="SNOW", "WINTER WEATHER",ifelse(StormData$EVTYPE=="RAIN", "HEAVY RAIN",ifelse(StormData$EVTYPE=="OTHER", "FLASH FLOOD",ifelse(StormData$EVTYPE=="LANDSPOUT", "TORNADO",ifelse(StormData$EVTYPE=="LANDSLUMP", "DEBRIS FLOW",ifelse(StormData$EVTYPE=="HIGH SWELLS", "HIGH SURF",ifelse(StormData$EVTYPE=="EXTENDED COLD", "COLD/WIND CHILL",ifelse(StormData$EVTYPE=="EXCESSIVE SNOW", "HEAVY SNOW",ifelse(StormData$EVTYPE=="DAM BREAK", "FLASH FLOOD",ifelse(StormData$EVTYPE=="COLD", "COLD/WIND CHILL",ifelse(StormData$EVTYPE=="BLOWING DUST", "DUST STORM",ifelse(StormData$EVTYPE=="BLOWING SNOW", "WINTER STORM",ifelse(StormData$EVTYPE=="ASTRONOMICAL HIGH TIDE", "HIGH SURF",ifelse(StormData$EVTYPE=="BEACH EROSION", "HIGH SURF",StormData$EVTYPE))))))))))))))))))))))))))))))))))))))))))))
+
+StormData$EVTYPE2<-ifelse(regexpr("TSTM",StormData$EVTYPE2)>0,"THUNDERSTORM WIND",ifelse(regexpr("TORNADO",StormData$EVTYPE2)>0,"TORNADO",ifelse(regexpr("THU",StormData$EVTYPE2)>0,"THUNDERSTORM WIND",ifelse(regexpr("TROP",StormData$EVTYPE2)>0,"TROPICAL STORM",ifelse(regexpr("FLASH",StormData$EVTYPE2)>0,"FLASH FLOOD",ifelse(regexpr("SURGE",StormData$EVTYPE2)>0,"STORM SURGE/TIDE",ifelse(regexpr("SQUAL",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("MARINE HAIL",StormData$EVTYPE2)>0,"MARINE HAIL",ifelse(regexpr("HAIL",StormData$EVTYPE2)>0,"HAIL",ifelse(regexpr("SURF",StormData$EVTYPE2)>0,"HIGH SURF",ifelse(regexpr("SLIDE",StormData$EVTYPE2)>0,"DEBRIS FLOW",ifelse(regexpr("RIVER",StormData$EVTYPE2)>0,"FLOOD",ifelse(regexpr("CURRENT",StormData$EVTYPE2)>0,"RIP CURRENT",ifelse(regexpr("WIND DAMAGE",StormData$EVTYPE2)>0,"STRONG WIND",ifelse(regexpr("PRECIP",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("BURST",StormData$EVTYPE2)>0,"THUNDERSTORM WIND",ifelse(regexpr("LIGHT S",StormData$EVTYPE2)>0,"WINTER STORM",ifelse(regexpr("FREEZING",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("LATE SEA",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("EFFECT",StormData$EVTYPE2)>0,"LAKE-EFFECT SNOW",ifelse(regexpr("ICE JAM",StormData$EVTYPE2)>0,"FLASH FLOOD",ifelse(regexpr("ROAD",StormData$EVTYPE2)>0,"FROST/FREEZE",ifelse(regexpr("AND ICE",StormData$EVTYPE2)>0,"WINTER STORM",ifelse(regexpr("ICE",StormData$EVTYPE2)>0,"ICE STORM",ifelse(regexpr("HURR",StormData$EVTYPE2)>0,"HURRICANE (TYPHOON)",ifelse(regexpr("MARINE HIGH WIND",StormData$EVTYPE2)>0,"MARINE HIGH WIND",ifelse(regexpr("HIGH WIND",StormData$EVTYPE2)>0,"HIGH WIND",ifelse(regexpr(" SEAS",StormData$EVTYPE2)>0,"HIGH SURF",ifelse(regexpr("HEAVY SNOW",StormData$EVTYPE2)>0,"HEAVY SNOW",ifelse(regexpr("GUST",StormData$EVTYPE2)>0,"STRONG WIND",ifelse(regexpr("GRAD",StormData$EVTYPE2)>0,"TROPICAL DEPRESSION",ifelse(regexpr("GLAZE",StormData$EVTYPE2)>0,"FROST/FREEZE",ifelse(regexpr("FROST",StormData$EVTYPE2)>0,"FROST/FREEZE",ifelse(regexpr("FREEZE",StormData$EVTYPE2)>0,"FROST/FREEZE",ifelse(regexpr("FREEZING FOG",StormData$EVTYPE2)>0,"FREEZING FOG",ifelse(regexpr("FOG",StormData$EVTYPE2)>0,"DENSE FOG",ifelse(regexpr("CHILL",StormData$EVTYPE2)>0,"EXTREME COLD/WIND CHILL",ifelse(regexpr("EXTREM",StormData$EVTYPE2)>0,"EXTREME COLD/WIND CHILL",ifelse(regexpr("CSTL",StormData$EVTYPE2)>0,"COSTAL FLOOD",ifelse(regexpr("COASTAL",StormData$EVTYPE2)>0,"COSTAL FLOOD",StormData$EVTYPE2))))))))))))))))))))))))))))))))))))))))
+
+StormData$EVTYPE2<-ifelse(regexpr("COLD AND",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("RAIN/SNOW",StormData$EVTYPE2)>0,"WINTER WEATHER",ifelse(regexpr("HYPOTH",StormData$EVTYPE2)>0,"COLD/WIND CHILL",ifelse(regexpr("COLD W",StormData$EVTYPE2)>0,"COLD/WIND CHILL",ifelse(regexpr("Y COLD",StormData$EVTYPE2)>0,"COLD/WIND CHILL",ifelse(regexpr("HEAT",StormData$EVTYPE2)>0,"RECORD HEAT",ifelse(regexpr("WARM",StormData$EVTYPE2)>0,"RECORD HEAT",ifelse(regexpr("DROWN",StormData$EVTYPE2)>0,"FLASH FLOOD",ifelse(regexpr("HIGH WATER",StormData$EVTYPE2)>0,"FLOOD",ifelse(regexpr("L RAIN",StormData$EVTYPE2)>0,"FLASH FLOOD",ifelse(regexpr("ROGUE",StormData$EVTYPE2)>0,"HIGH SURF",ifelse(regexpr("BRUSH",StormData$EVTYPE2)>0,"WILDFIRE",StormData$EVTYPE2))))))))))))
+
+
+```
+
+Need to add two columns ("PROPDMGCOST" and "CROPDMGCOST") to the data table.  They are created by decoding the Property and Crop damage fields as follows:
+    
+PROPDMGEXP (CROPDMGEXP)   |     PROPDMGCOST    |     CROPDMGCOST
+------------------------  | ------------------ | --------------------
+B  	                      |     PROPDMGx10^9   |     CROPDMGx10^9
+M, m	                    |     PROPDMGx10^6   |     CROPDMGx10^6
+K	                        |     PROPDMGx10^3   |     CROPDMGx10^3
+H, h	                    |     PROPDMGx10^2   |     CROPDMGx10^2
+Number (1,2,3..)    	    | PROPDMGx10x(Number)|	CROPDMGx10x(Number)
+
+```{r}
+
+StormData$PROPDMGCOST<-ifelse(toupper(StormData$PROPDMGEXP)== "B", StormData$PROPDMG*10^9,ifelse(toupper(StormData$PROPDMGEXP)== "M", StormData$PROPDMG*10^6,ifelse(toupper(StormData$PROPDMGEXP)== "K", StormData$PROPDMG*10^3,  ifelse(toupper(StormData$PROPDMGEXP)== "H", StormData$PROPDMG*10^2,StormData$PROPDMG*10*as.numeric(StormData$PROPDMGEXP))  )))
+
+StormData$CROPDMGCOST<-ifelse(toupper(StormData$CROPDMGEXP)== "B", StormData$CROPDMG*10^9,ifelse(toupper(StormData$CROPDMGEXP)== "M", StormData$CROPDMG*10^6,ifelse(toupper(StormData$CROPDMGEXP)== "K", StormData$CROPDMG*10^3,  ifelse(toupper(StormData$CROPDMGEXP)== "H", StormData$CROPDMG*10^2,StormData$CROPDMG*10*as.numeric(StormData$CROPDMGEXP))  )))
+
+```
+Subset data for Fatalities, Injuries, Property Damage & Crop Damage so we can evaluate impact of storms on each category
+```{r}
+library(dplyr)
+
+Fatalities<-subset(StormData, StormData$FATALITIES > 0)
+Fatalities<-select(StormData, FATALITIES, EVTYPE2)%>%filter(FATALITIES>0)
+TotalDeaths<-Fatalities%>%summarise(TotalDeath=sum(FATALITIES))
+GroupedFatalities<-Fatalities%>%group_by(EVTYPE2)%>%summarise(TotalDeath=sum(FATALITIES))%>%arrange(desc(TotalDeath))
+GroupedFatalities%>%mutate(FracDeath=TotalDeath/(!!!TotalDeaths))%>%head
+
+Injuries <-subset(StormData, StormData$INJURIES > 0)
+Injuries<-select(StormData, INJURIES, EVTYPE2)%>%filter(INJURIES>0)
+TotalInjuries<-Injuries%>%summarise(TotalInjuries=sum(INJURIES))
+GroupedInjuries<-Injuries%>%group_by(EVTYPE2)%>%summarise(TotalInjuries=sum(INJURIES))%>%arrange(desc(TotalInjuries))
+GroupedInjuries%>%mutate(FracInjuries=TotalInjuries/(!!!TotalInjuries))%>%head
+
+CropDamage <-subset(StormData, StormData$CROPDMGCOST>0)
+CropDamage<-select(StormData,CROPDMG, CROPDMGCOST, EVTYPE2)%>% filter(CROPDMGCOST>0)
+TotalCropDamage<-CropDamage%>%summarize(TotalCropDamage=sum(CROPDMGCOST,na.rm=TRUE))
+GroupedCropDamage<-CropDamage%>%group_by(EVTYPE2)%>%summarise(TotalCropDamage=sum(CROPDMGCOST))%>%arrange(desc(TotalCropDamage))
+GroupedCropDamage%>%mutate(FracCropDamage=TotalCropDamage/(!!!TotalCropDamage))%>%head
+
+PropDamage <-subset(StormData, StormData$PROPDMGCOST>0)
+PropDamage<-select(StormData,PROPDMG, PROPDMGCOST, EVTYPE2)%>% filter(PROPDMGCOST>0)
+TotalPropDamage<-PropDamage%>%summarize(TotalPropDamage=sum(PROPDMGCOST,na.rm=TRUE))
+GroupedPropDamage<-PropDamage%>%group_by(EVTYPE2)%>%summarise(TotalPropDamage=sum(PROPDMGCOST))%>%arrange(desc(TotalPropDamage))
+GroupedPropDamage%>%mutate(FracPropDamage=TotalPropDamage/(!!!TotalPropDamage))%>%head
+
+```
+#Results
+
+For population health, this can be expressed as follows:
+```{r}
+TOP10F<-head(GroupedFatalities,10)
+TOP10I<-head(GroupedInjuries,10)
+par(mar=c(15,5,1,1))
+par(mfrow=c(1,2))
+barplot(las=2,TOP10F$TotalDeath, names.arg=TOP10F$EVTYPE2, main="Fatalies")
+barplot(las=2,TOP10I$TotalInjuries, names.arg=TOP10I$EVTYPE2, main="Injuries")
+```
+
+Property and Crop Damage can be summarized as follows:
+```{r}
+TOP10P<-head(GroupedPropDamage,10)
+TOP10C<-head(GroupedCropDamage,10)
+par(mar=c(15,5,1,1))
+par(mfrow=c(1,2))
+barplot(las=2,TOP10P$TotalPropDamage, names.arg=TOP10P$EVTYPE2, main="Property Damage ($)")
+barplot(las=2,TOP10C$TotalCropDamage, names.arg=TOP10C$EVTYPE2, main="Crop Damage ($)")
+```
